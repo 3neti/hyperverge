@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('campaigns', function (Blueprint $table) {
+            $table->enum('signature_mode', ['proforma', 'roll'])
+                ->default('proforma')
+                ->after('config')
+                ->comment('Document signature mode: proforma (template) or roll (accumulate)');
+            
+            $table->json('used_tiles')
+                ->nullable()
+                ->after('signature_mode')
+                ->comment('Track which tile positions have been used for signatures');
+            
+            $table->integer('max_tiles')
+                ->default(9)
+                ->after('used_tiles')
+                ->comment('Maximum number of signatures allowed (tile limit)');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('campaigns', function (Blueprint $table) {
+            $table->dropColumn(['signature_mode', 'used_tiles', 'max_tiles']);
+        });
+    }
+};

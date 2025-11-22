@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "statusCode": "200",
+  "result": {
+    "isLive": true,
+    "quality": {
+      "blur": false,
+      "facePresent": true,
+      "eyesClosed": false,
+      "maskPresent": false
+    }
+  }
+}

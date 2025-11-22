@@ -1,0 +1,53 @@
+{
+  "name": "3neti/hyperverge",
+  "description": "Laravel wrapper for HyperVerge APIs (Selfie Liveness, Face Match, Link KYC, Results API).",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "LBHurtado\\HyperVerge\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "LBHurtado\\HyperVerge\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": ">=8.2",
+    "illuminate/support": "^11.0 || ^12.0",
+    "illuminate/http": "^11.0 || ^12.0",
+    "spatie/laravel-data": "^4.0",
+    "lorisleiva/laravel-actions": "^2.9",
+    "filippo-toso/pdf-watermarker": "^1.0",
+    "intervention/image": "^2.7",
+    "endroid/qr-code": "^5.0 || ^6.0",
+    "setasign/fpdf": "^1.8",
+    "phpseclib/phpseclib": "^3.0",
+    "guzzlehttp/guzzle": "^7.0",
+    "tecnickcom/tcpdf": "^6.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^9.15",
+    "pestphp/pest": "^3.0 || ^4.0",
+    "pestphp/pest-plugin-laravel": "^3.0 || ^4.0",
+    "spatie/laravel-medialibrary": "^11.0"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "LBHurtado\\HyperVerge\\HypervergeServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "pest"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
+}
