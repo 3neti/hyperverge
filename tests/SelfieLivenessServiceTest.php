@@ -54,4 +54,4 @@ it('handles liveness failure', function () {
 
     $service = new SelfieLivenessService($client);
     $service->verify('fake_base64_image');
-})->throws(\Hyperverge\Exceptions\LivelinessFailedException::class);
+})->throws(\LBHurtado\HyperVerge\Exceptions\LivelinessFailedException::class);
