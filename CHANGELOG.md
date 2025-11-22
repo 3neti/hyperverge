@@ -72,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick start guides
 - Project summary
 
+## [1.0.1] - 2025-11-22
+
+### Fixed
+- Corrected exception namespace in SelfieLivenessServiceTest
+- Test suite now 100% passing (41/41 tests)
+
 ## [Unreleased]
 
 ### Planned
@@ -81,4 +87,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.0.1]: https://github.com/3neti/hyperverge/releases/tag/v1.0.1
 [1.0.0]: https://github.com/3neti/hyperverge/releases/tag/v1.0.0
