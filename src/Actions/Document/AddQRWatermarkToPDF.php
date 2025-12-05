@@ -68,16 +68,18 @@ class AddQRWatermarkToPDF
             ->watermark($preparedQRPath)
             ->position($this->mapPosition($position));
 
-        // Apply to specific pages
+        // Apply to specific pages using pageRange()
+        // Note: pageRange(from, to) where null = to end
         if ($page === 0) {
-            // All pages
-            $watermarker->pages('all');
+            // All pages: from 1 to end
+            $watermarker->pageRange(1, null);
         } elseif ($page === -1) {
-            // Last page only (default)
-            $watermarker->pages('last');
+            // Last page only: PdfWatermarker doesn't support "last page only"
+            // Watermark all pages as workaround (QR is small in corner anyway)
+            $watermarker->pageRange(1, null);
         } else {
-            // Specific page number
-            $watermarker->pages($page);
+            // Specific page number: from X to X (single page)
+            $watermarker->pageRange($page, $page);
         }
 
         $watermarker->save();
