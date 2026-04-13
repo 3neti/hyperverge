@@ -2,6 +2,10 @@
 
 A comprehensive Laravel package for HyperVerge KYC APIs with document signing, QR verification, blockchain timestamping, and certificate generation.
 
+## Compatibility
+- Laravel 11, 12, 13
+- PHP 8.3+
+
 ## Features
 
 ✅ **KYC Verification** - Selfie liveness, face match, ID verification
