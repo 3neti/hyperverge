@@ -6,9 +6,9 @@ use FilippoToso\PdfWatermarker\Facades\ImageWatermarker;
 use FilippoToso\PdfWatermarker\Support\Position;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Intervention\Image\ImageManager;
 use LBHurtado\HyperVerge\Contracts\DocumentStoragePort;
+use Lorisleiva\Actions\Concerns\AsAction;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TrackDocument
@@ -22,8 +22,8 @@ class TrackDocument
     /**
      * Add tracking QR code to document.
      *
-     * @param Model $model The model that owns the document
-     * @param string $trackingUrl URL to embed in QR code
+     * @param  Model  $model  The model that owns the document
+     * @param  string  $trackingUrl  URL to embed in QR code
      * @return mixed The tracked document media object
      */
     public function handle(Model $model, string $trackingUrl): mixed
@@ -32,8 +32,8 @@ class TrackDocument
 
         // Get original document
         $originalDocument = $this->storage->getDocument($model, 'documents');
-        if (!$originalDocument) {
-            throw new \RuntimeException("No document found for model: " . get_class($model));
+        if (! $originalDocument) {
+            throw new \RuntimeException('No document found for model: '.get_class($model));
         }
 
         $documentPath = $this->storage->getPath($originalDocument);
@@ -70,7 +70,7 @@ class TrackDocument
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $qrCodePath = Storage::path($tempDir . '/qr_' . uniqid() . '.png');
+        $qrCodePath = Storage::path($tempDir.'/qr_'.uniqid().'.png');
 
         // Generate QR code
         $qrCode = QrCode::format('png')
@@ -79,7 +79,7 @@ class TrackDocument
             ->generate($url);
 
         // Save to file
-        Image::make($qrCode)->save($qrCodePath);
+        ImageManager::gd()->read($qrCode)->toPng()->save($qrCodePath);
 
         return $qrCodePath;
     }
@@ -92,7 +92,7 @@ class TrackDocument
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $outputPath = Storage::path($tempDir . '/tracked_' . uniqid() . '.pdf');
+        $outputPath = Storage::path($tempDir.'/tracked_'.uniqid().'.pdf');
 
         // Apply watermark (QR code) to first page only
         ImageWatermarker::input($documentPath)

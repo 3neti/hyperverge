@@ -5,16 +5,17 @@ namespace LBHurtado\HyperVerge\Actions\Document;
 use FilippoToso\PdfWatermarker\Facades\ImageWatermarker;
 use FilippoToso\PdfWatermarker\Support\Position;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 /**
  * Add QR code watermark to signed PDF.
- * 
+ *
  * Embeds a QR code in the bottom-right corner (or configured position)
  * of a signed PDF document for easy verification.
- * 
+ *
  * Usage:
- * 
+ *
  * $qrCodePath = GenerateVerificationQRCode::getFilePath($verificationUrl);
  * $watermarkedPdf = AddQRWatermarkToPDF::run($signedPdfPath, $qrCodePath);
  */
@@ -25,12 +26,12 @@ class AddQRWatermarkToPDF
     /**
      * Add QR code watermark to PDF.
      *
-     * @param string $pdfPath Absolute path to signed PDF
-     * @param string $qrCodePath Absolute path to QR code image
-     * @param int|null $page Page number to watermark (null = last page, 0 = all pages, 1+ = specific page)
-     * @param string|null $position Position constant from FilippoToso\PdfWatermarker\Support\Position
-     * @param int|null $size QR code size in pixels
-     * @param int|null $opacity Opacity (0-100)
+     * @param  string  $pdfPath  Absolute path to signed PDF
+     * @param  string  $qrCodePath  Absolute path to QR code image
+     * @param  int|null  $page  Page number to watermark (null = last page, 0 = all pages, 1+ = specific page)
+     * @param  string|null  $position  Position constant from FilippoToso\PdfWatermarker\Support\Position
+     * @param  int|null  $size  QR code size in pixels
+     * @param  int|null  $opacity  Opacity (0-100)
      * @return string Absolute path to watermarked PDF
      */
     public function handle(
@@ -43,7 +44,7 @@ class AddQRWatermarkToPDF
     ): string {
         // Get configuration
         $config = config('hyperverge.document_signing.qr_watermark', []);
-        
+
         // Use config defaults if not provided
         $page = $page ?? $config['page'] ?? -1; // -1 = last page
         $position = $position ?? $config['position'] ?? 'bottom-right';
@@ -51,7 +52,7 @@ class AddQRWatermarkToPDF
         $opacity = $opacity ?? $config['opacity'] ?? 100;
 
         // Check if QR watermarking is enabled
-        if (!($config['enabled'] ?? true)) {
+        if (! ($config['enabled'] ?? true)) {
             // Return original PDF path if disabled
             return $pdfPath;
         }
@@ -66,6 +67,7 @@ class AddQRWatermarkToPDF
         $watermarker = ImageWatermarker::input($pdfPath)
             ->output($outputPath)
             ->watermark($preparedQRPath)
+            ->resolution((int) ($config['resolution'] ?? 300))
             ->position($this->mapPosition($position));
 
         // Apply to specific pages using pageRange()
@@ -95,9 +97,9 @@ class AddQRWatermarkToPDF
     /**
      * Prepare QR code image (resize and adjust opacity if needed).
      *
-     * @param string $qrCodePath Original QR code path
-     * @param int $size Target size in pixels
-     * @param int $opacity Opacity (0-100)
+     * @param  string  $qrCodePath  Original QR code path
+     * @param  int  $size  Target size in pixels
+     * @param  int  $opacity  Opacity (0-100)
      * @return string Path to prepared QR code
      */
     protected function prepareQRCode(string $qrCodePath, int $size, int $opacity): string
@@ -107,29 +109,29 @@ class AddQRWatermarkToPDF
             return $qrCodePath;
         }
 
-        $img = \Intervention\Image\Facades\Image::make($qrCodePath);
+        $manager = ImageManager::gd();
+        $img = $manager->read($qrCodePath);
 
         // Resize if needed
         if ($img->width() !== $size || $img->height() !== $size) {
-            $img->resize($size, $size, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
+            $img->scaleDown(width: $size, height: $size);
         }
 
-        // Apply opacity if needed
+        // Intervention Image 3 applies opacity while placing an image.
         if ($opacity < 100) {
-            $img->opacity($opacity);
+            $img = $manager
+                ->create($img->width(), $img->height())
+                ->place($img, opacity: $opacity);
         }
 
         // Save to temp location
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $filename = 'qr_watermark_' . uniqid() . '.png';
-        $path = Storage::path($tempDir . '/' . $filename);
-        
-        $img->save($path, 100, 'png');
+        $filename = 'qr_watermark_'.uniqid().'.png';
+        $path = Storage::path($tempDir.'/'.$filename);
+
+        $img->toPng()->save($path);
 
         return $path;
     }
@@ -137,7 +139,7 @@ class AddQRWatermarkToPDF
     /**
      * Map position string to PdfWatermarker position constant.
      *
-     * @param string $position Position string (e.g., 'bottom-right', 'top-left')
+     * @param  string  $position  Position string (e.g., 'bottom-right', 'top-left')
      * @return string Position constant
      */
     protected function mapPosition(string $position): string
@@ -159,7 +161,7 @@ class AddQRWatermarkToPDF
     /**
      * Generate output path for watermarked PDF.
      *
-     * @param string $pdfPath Original PDF path
+     * @param  string  $pdfPath  Original PDF path
      * @return string Output path
      */
     protected function generateOutputPath(string $pdfPath): string
@@ -167,19 +169,20 @@ class AddQRWatermarkToPDF
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $filename = 'qr_watermarked_' . uniqid() . '.pdf';
-        return Storage::path($tempDir . '/' . $filename);
+        $filename = 'qr_watermarked_'.uniqid().'.pdf';
+
+        return Storage::path($tempDir.'/'.$filename);
     }
 
     /**
      * Add QR watermark using action call.
      *
-     * @param string $pdfPath Absolute path to signed PDF
-     * @param string $qrCodePath Absolute path to QR code image
-     * @param int|null $page Page number to watermark
-     * @param string|null $position Position constant
-     * @param int|null $size QR code size in pixels
-     * @param int|null $opacity Opacity (0-100)
+     * @param  string  $pdfPath  Absolute path to signed PDF
+     * @param  string  $qrCodePath  Absolute path to QR code image
+     * @param  int|null  $page  Page number to watermark
+     * @param  string|null  $position  Position constant
+     * @param  int|null  $size  QR code size in pixels
+     * @param  int|null  $opacity  Opacity (0-100)
      * @return string Absolute path to watermarked PDF
      */
     public static function run(

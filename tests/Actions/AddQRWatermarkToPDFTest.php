@@ -2,14 +2,16 @@
 
 namespace LBHurtado\HyperVerge\Tests\Actions;
 
+use Illuminate\Support\Facades\Storage;
 use LBHurtado\HyperVerge\Actions\Document\AddQRWatermarkToPDF;
 use LBHurtado\HyperVerge\Actions\Document\GenerateVerificationQRCode;
 use LBHurtado\HyperVerge\Tests\TestCase;
-use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Test;
 
 class AddQRWatermarkToPDFTest extends TestCase
 {
     protected string $testPdfPath;
+
     protected string $testQRPath;
 
     protected function setUp(): void
@@ -33,8 +35,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
-    public function it_adds_qr_watermark_to_pdf()
+    #[Test]
+    public function test_it_adds_qr_watermark_to_pdf()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run($this->testPdfPath, $this->testQRPath);
 
@@ -49,8 +51,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_applies_watermark_to_last_page_by_default()
+    #[Test]
+    public function test_it_applies_watermark_to_last_page_by_default()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run($this->testPdfPath, $this->testQRPath);
 
@@ -60,8 +62,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_applies_watermark_to_all_pages_when_specified()
+    #[Test]
+    public function test_it_applies_watermark_to_all_pages_when_specified()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run(
             $this->testPdfPath,
@@ -75,8 +77,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_applies_watermark_to_specific_page()
+    #[Test]
+    public function test_it_applies_watermark_to_specific_page()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run(
             $this->testPdfPath,
@@ -90,8 +92,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_supports_different_positions()
+    #[Test]
+    public function test_it_supports_different_positions()
     {
         $positions = [
             'top-left',
@@ -117,8 +119,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         }
     }
 
-    /** @test */
-    public function it_supports_custom_qr_size()
+    #[Test]
+    public function test_it_supports_custom_qr_size()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run(
             $this->testPdfPath,
@@ -132,8 +134,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_supports_custom_opacity()
+    #[Test]
+    public function test_it_supports_custom_opacity()
     {
         $watermarkedPath = AddQRWatermarkToPDF::run(
             $this->testPdfPath,
@@ -147,8 +149,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_respects_disabled_qr_watermark_config()
+    #[Test]
+    public function test_it_respects_disabled_qr_watermark_config()
     {
         // Disable QR watermarking
         config(['hyperverge.document_signing.qr_watermark.enabled' => false]);
@@ -159,8 +161,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         $this->assertEquals($this->testPdfPath, $result);
     }
 
-    /** @test */
-    public function it_uses_config_defaults()
+    #[Test]
+    public function test_it_uses_config_defaults()
     {
         config([
             'hyperverge.document_signing.qr_watermark.enabled' => true,
@@ -178,8 +180,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($watermarkedPath);
     }
 
-    /** @test */
-    public function it_creates_unique_output_files()
+    #[Test]
+    public function test_it_creates_unique_output_files()
     {
         $path1 = AddQRWatermarkToPDF::run($this->testPdfPath, $this->testQRPath);
         $path2 = AddQRWatermarkToPDF::run($this->testPdfPath, $this->testQRPath);
@@ -193,8 +195,8 @@ class AddQRWatermarkToPDFTest extends TestCase
         @unlink($path2);
     }
 
-    /** @test */
-    public function it_prepares_qr_code_with_different_sizes()
+    #[Test]
+    public function test_it_prepares_qr_code_with_different_sizes()
     {
         // Test with small QR
         $smallPath = AddQRWatermarkToPDF::run($this->testPdfPath, $this->testQRPath, size: 50);
@@ -219,72 +221,14 @@ class AddQRWatermarkToPDFTest extends TestCase
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $filename = 'test_pdf_' . uniqid() . '.pdf';
-        $path = Storage::path($tempDir . '/' . $filename);
+        $filename = 'test_pdf_'.uniqid().'.pdf';
+        $path = Storage::path($tempDir.'/'.$filename);
 
-        // Create minimal valid PDF
-        $pdfContent = <<<PDF
-%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/Resources <<
-/Font <<
-/F1 <<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
->>
->>
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
-4 0 obj
-<<
-/Length 44
->>
-stream
-BT
-/F1 12 Tf
-100 700 Td
-(Test PDF) Tj
-ET
-endstream
-endobj
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000317 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-410
-%%EOF
-PDF;
-
-        file_put_contents($path, $pdfContent);
+        $pdf = new \FPDF;
+        $pdf->AddPage();
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, 'Test PDF');
+        $pdf->Output('F', $path);
 
         return $path;
     }

@@ -1,7 +1,10 @@
 vendor/
 composer.lock
 .phpunit.result.cache
+.phpunit.cache/
+.pest.xml
 .php_cs.cache
 .idea/
 .vscode/
 *.log
+.DS_Store

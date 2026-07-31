@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
     /**
      * HyperVerge API Base URL
@@ -48,16 +50,16 @@ return [
     'validation' => [
         // Minimum face match score (0.0 - 1.0)
         'min_face_match_score' => env('HYPERVERGE_MIN_FACE_MATCH', 0),
-        
+
         // Minimum liveness score (0.0 - 1.0) - null to skip
         'min_liveness_score' => env('HYPERVERGE_MIN_LIVENESS', null),
-        
+
         // Require liveness check to pass
         'require_liveness' => env('HYPERVERGE_REQUIRE_LIVENESS', false),
-        
+
         // Application statuses that are considered approved
         'allowed_statuses' => ['approved', 'needs_review', 'auto_approved'],
-        
+
         // Application statuses that are auto-rejected
         'rejected_statuses' => ['rejected', 'auto_declined'],
     ],
@@ -84,7 +86,7 @@ return [
      */
     'webhook' => [
         'secret' => env('HYPERVERGE_WEBHOOK_SECRET'),
-        'model_class' => env('HYPERVERGE_WEBHOOK_MODEL_CLASS', \App\Models\User::class),
+        'model_class' => env('HYPERVERGE_WEBHOOK_MODEL_CLASS', User::class),
         'transaction_id_field' => env('HYPERVERGE_WEBHOOK_TRANSACTION_FIELD', 'kyc_transaction_id'),
     ],
 
@@ -103,18 +105,18 @@ return [
      */
     'face_verification' => [
         'enabled' => env('HYPERVERGE_FACE_VERIFICATION_ENABLED', true),
-        
+
         // Liveness check settings
         'require_liveness' => env('HYPERVERGE_FACE_LIVENESS_REQUIRED', true),
         'min_liveness_score' => env('HYPERVERGE_FACE_MIN_LIVENESS', 0.8),
-        
+
         // Face match settings
         'min_match_confidence' => env('HYPERVERGE_FACE_MIN_MATCH', 0.85),
-        
+
         // Storage settings
         'store_verification_attempts' => env('HYPERVERGE_STORE_FACE_ATTEMPTS', true),
         'attempts_retention_days' => env('HYPERVERGE_FACE_ATTEMPTS_RETENTION', 30),
-        
+
         // Image validation
         'max_file_size' => 5 * 1024 * 1024, // 5MB
         'min_width' => 200,
@@ -146,7 +148,7 @@ return [
 
             // Timestamp banner
             'timestamp' => [
-                'font' => 'DejaVuSans.ttf', // Intervention/Image bundled font
+                'font' => 'DejaVuSans.ttf',
                 'size' => 32,
                 'color' => '#FFFFFF',
                 'background' => '#36454F',
@@ -225,6 +227,7 @@ return [
             'enabled' => true,
             'position' => 'bottom-right', // Position on PDF
             'size' => 100, // QR size in pixels (about 1 inch at 300 DPI)
+            'resolution' => 300, // Image resolution used to size the watermark on the PDF
             'page' => -1, // Last page (-1) or all pages (0)
             'opacity' => 100,
         ],

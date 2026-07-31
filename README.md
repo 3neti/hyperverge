@@ -20,7 +20,7 @@ A comprehensive Laravel package for HyperVerge KYC APIs with document signing, Q
 ## Installation
 
 ```bash
-composer require lbhurtado/hyperverge
+composer require 3neti/hyperverge:2.0.0-beta.1
 ```
 
 ## Configuration
@@ -28,7 +28,7 @@ composer require lbhurtado/hyperverge
 Publish the configuration file:
 
 ```bash
-php artisan vendor:publish --provider="Hyperverge\HypervergeServiceProvider"
+php artisan vendor:publish --provider="LBHurtado\HyperVerge\HypervergeServiceProvider"
 ```
 
 Add your HyperVerge credentials to `.env`:

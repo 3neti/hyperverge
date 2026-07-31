@@ -3,8 +3,10 @@
 namespace LBHurtado\HyperVerge\Actions\Document;
 
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
-use Intervention\Image\Image as ImageInstance;
+use Intervention\Image\Geometry\Factories\RectangleFactory;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\ImageInterface;
+use Intervention\Image\Typography\FontFactory;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class ProcessIdImageStamp
@@ -14,11 +16,11 @@ class ProcessIdImageStamp
     /**
      * Create a composite signature stamp from KYC ID image.
      *
-     * @param string $idImagePath Absolute path to ID image
-     * @param array $metadata KYC metadata (name, email, etc.)
-     * @param string $timestamp Formatted timestamp
-     * @param string $qrCodeDataUri QR code data URI (base64)
-     * @param string|null $logoPath Optional logo file path
+     * @param  string  $idImagePath  Absolute path to ID image
+     * @param  array  $metadata  KYC metadata (name, email, etc.)
+     * @param  string  $timestamp  Formatted timestamp
+     * @param  string  $qrCodeDataUri  QR code data URI (base64)
+     * @param  string|null  $logoPath  Optional logo file path
      * @return string Absolute path to generated stamp PNG
      */
     public function handle(
@@ -54,37 +56,42 @@ class ProcessIdImageStamp
     /**
      * Create base image from ID card.
      */
-    protected function createBaseImage(string $idImagePath, array $config): ImageInstance
+    protected function createBaseImage(string $idImagePath, array $config): ImageInterface
     {
-        return Image::make($idImagePath)
-            ->resize($config['width'], $config['height'], function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            })
-            ->resizeCanvas($config['width'], $config['height'], 'center', false, 'ffffff');
+        return ImageManager::gd()
+            ->read($idImagePath)
+            ->scaleDown(width: $config['width'], height: $config['height'])
+            ->resizeCanvas($config['width'], $config['height'], 'ffffff', 'center');
     }
 
     /**
      * Apply logo watermark overlay.
      */
-    protected function applyLogoWatermark(ImageInstance $stamp, string $logoPath, array $config): ImageInstance
+    protected function applyLogoWatermark(ImageInterface $stamp, string $logoPath, array $config): ImageInterface
     {
-        $logo = Image::make($logoPath)
-            ->opacity($config['opacity'])
+        $logo = ImageManager::gd()
+            ->read($logoPath)
             ->rotate($config['angle']);
 
-        return $stamp->insert($logo, $config['position']);
+        return $stamp->place(
+            $logo,
+            $config['position'],
+            opacity: $config['opacity'],
+        );
     }
 
     /**
      * Add metadata text (name, email, etc.) to top-right.
      */
-    protected function addMetadataText(ImageInstance $stamp, array $metadata, array $config): ImageInstance
+    protected function addMetadataText(ImageInterface $stamp, array $metadata, array $config): ImageInterface
     {
         $text = json_encode(array_filter($metadata), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        
-        $stamp->text($text, $stamp->width() - 10, 10, function ($font) use ($config) {
-            $font->file($this->getFontPath($config['font']));
+
+        $stamp->text($text, $stamp->width() - 10, 10, function (FontFactory $font) use ($config): void {
+            if ($fontPath = $this->getFontPath($config['font'])) {
+                $font->filename($fontPath);
+            }
+
             $font->size($config['size']);
             $font->color($config['color']);
             $font->align('right');
@@ -97,20 +104,25 @@ class ProcessIdImageStamp
     /**
      * Add timestamp banner at bottom.
      */
-    protected function addTimestampBanner(ImageInstance $stamp, string $timestamp, array $config): ImageInstance
+    protected function addTimestampBanner(ImageInterface $stamp, string $timestamp, array $config): ImageInterface
     {
         $height = $config['size'] + 16;
         $y = $stamp->height() - $height;
 
         // Draw background rectangle
-        $stamp->rectangle(0, $y, $stamp->width(), $stamp->height(), function ($draw) use ($config) {
-            $draw->background($config['background']);
-            $draw->border(1, '#67C23A');
+        $stamp->drawRectangle(0, $y, function (RectangleFactory $rectangle) use ($config, $height, $stamp): void {
+            $rectangle
+                ->size($stamp->width(), $height)
+                ->background($config['background'])
+                ->border('#67C23A', 1);
         });
 
         // Add timestamp text
-        $stamp->text($timestamp, 10, $y + 8, function ($font) use ($config) {
-            $font->file($this->getFontPath($config['font']));
+        $stamp->text($timestamp, 10, $y + 8, function (FontFactory $font) use ($config): void {
+            if ($fontPath = $this->getFontPath($config['font'])) {
+                $font->filename($fontPath);
+            }
+
             $font->size($config['size']);
             $font->color($config['color']);
             $font->align('left');
@@ -123,27 +135,31 @@ class ProcessIdImageStamp
     /**
      * Add QR code to bottom-left.
      */
-    protected function addQrCode(ImageInstance $stamp, string $qrCodeDataUri, array $config): ImageInstance
+    protected function addQrCode(ImageInterface $stamp, string $qrCodeDataUri, array $config): ImageInterface
     {
-        $qrCode = Image::make($qrCodeDataUri)
-            ->resize($config['size'], $config['size'])
-            ->opacity($config['opacity']);
+        $qrCode = ImageManager::gd()
+            ->read($qrCodeDataUri)
+            ->resize($config['size'], $config['size']);
 
-        return $stamp->insert($qrCode, $config['position']);
+        return $stamp->place(
+            $qrCode,
+            $config['position'],
+            opacity: $config['opacity'],
+        );
     }
 
     /**
      * Save stamp to temp directory.
      */
-    protected function saveStamp(ImageInstance $stamp): string
+    protected function saveStamp(ImageInterface $stamp): string
     {
         $tempDir = config('hyperverge.document_signing.temp_dir', 'tmp/document-signing');
         Storage::makeDirectory($tempDir);
 
-        $filename = 'stamp_' . uniqid() . '.png';
-        $path = Storage::path($tempDir . '/' . $filename);
+        $filename = 'stamp_'.uniqid().'.png';
+        $path = Storage::path($tempDir.'/'.$filename);
 
-        $stamp->save($path, 100, 'png');
+        $stamp->toPng()->save($path);
 
         return $path;
     }
@@ -151,7 +167,7 @@ class ProcessIdImageStamp
     /**
      * Get font file path.
      */
-    protected function getFontPath(string $font): string
+    protected function getFontPath(string $font): ?string
     {
         // Check if absolute path
         if (file_exists($font)) {
@@ -159,26 +175,28 @@ class ProcessIdImageStamp
         }
 
         // Check in public/fonts
-        $publicPath = public_path('fonts/' . $font);
+        $publicPath = public_path('fonts/'.$font);
         if (file_exists($publicPath)) {
             return $publicPath;
         }
 
         // Check in storage
-        $storagePath = storage_path('fonts/' . $font);
+        $storagePath = storage_path('fonts/'.$font);
         if (file_exists($storagePath)) {
             return $storagePath;
         }
 
-        // Fallback to Intervention's bundled fonts (DejaVuSans.ttf)
-        // These are typically in vendor/intervention/image/src/Intervention/Image/Gd/Fonts/
-        $vendorPath = base_path('vendor/intervention/image/src/Intervention/Image/Gd/Fonts/' . $font);
-        if (file_exists($vendorPath)) {
-            return $vendorPath;
+        foreach ([
+            '/usr/share/fonts/truetype/dejavu/'.$font,
+            '/System/Library/Fonts/Supplemental/'.$font,
+            '/Library/Fonts/'.$font,
+        ] as $systemPath) {
+            if (file_exists($systemPath)) {
+                return $systemPath;
+            }
         }
 
-        // Last resort: use numbered font (1-5) which are built into GD
-        return 3; // Default GD font
+        return null;
     }
 
     /**

@@ -20,7 +20,7 @@
     "spatie/laravel-data": "^4.0",
     "lorisleiva/laravel-actions": "^2.10",
     "filippo-toso/pdf-watermarker": "^1.0",
-    "intervention/image": "^2.7",
+    "intervention/image": "^3.0",
     "endroid/qr-code": "^5.0 || ^6.0",
     "setasign/fpdf": "^1.8",
     "phpseclib/phpseclib": "^3.0",
@@ -41,7 +41,7 @@
     }
   },
   "scripts": {
-    "test": "pest"
+    "test": "vendor/bin/pest"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

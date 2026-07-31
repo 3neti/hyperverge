@@ -4,11 +4,12 @@ namespace LBHurtado\HyperVerge\Tests\Actions;
 
 use LBHurtado\HyperVerge\Actions\Document\GenerateVerificationQRCode;
 use LBHurtado\HyperVerge\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class GenerateVerificationQRCodeTest extends TestCase
 {
-    /** @test */
-    public function it_generates_qr_code_with_data_uri_and_file_path()
+    #[Test]
+    public function test_it_generates_qr_code_with_data_uri_and_file_path()
     {
         $url = 'https://example.com/verify/abc123/xyz789';
 
@@ -34,8 +35,8 @@ class GenerateVerificationQRCodeTest extends TestCase
         @unlink($result['file_path']);
     }
 
-    /** @test */
-    public function it_generates_qr_code_with_custom_size()
+    #[Test]
+    public function test_it_generates_qr_code_with_custom_size()
     {
         $url = 'https://example.com/verify/test';
         $size = 400;
@@ -48,8 +49,8 @@ class GenerateVerificationQRCodeTest extends TestCase
         @unlink($result['file_path']);
     }
 
-    /** @test */
-    public function it_can_get_data_uri_only()
+    #[Test]
+    public function test_it_can_get_data_uri_only()
     {
         $url = 'https://example.com/verify/test';
 
@@ -59,8 +60,8 @@ class GenerateVerificationQRCodeTest extends TestCase
         $this->assertStringStartsWith('data:image/png;base64,', $dataUri);
     }
 
-    /** @test */
-    public function it_can_get_file_path_only()
+    #[Test]
+    public function test_it_can_get_file_path_only()
     {
         $url = 'https://example.com/verify/test';
 
@@ -73,8 +74,8 @@ class GenerateVerificationQRCodeTest extends TestCase
         @unlink($filePath);
     }
 
-    /** @test */
-    public function it_creates_unique_temp_files()
+    #[Test]
+    public function test_it_creates_unique_temp_files()
     {
         $url = 'https://example.com/verify/test';
 

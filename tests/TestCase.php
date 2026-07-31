@@ -2,7 +2,6 @@
 
 namespace LBHurtado\HyperVerge\Tests;
 
-use Intervention\Image\ImageServiceProvider;
 use LBHurtado\HyperVerge\HypervergeServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
@@ -19,7 +18,6 @@ class TestCase extends Orchestra
         return [
             HypervergeServiceProvider::class,
             MediaLibraryServiceProvider::class,
-            ImageServiceProvider::class,
         ];
     }
 
@@ -28,9 +26,9 @@ class TestCase extends Orchestra
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
 
         // Setup HyperVerge config
@@ -43,7 +41,7 @@ class TestCase extends Orchestra
         $app['config']->set('filesystems.default', 'public');
         $app['config']->set('filesystems.disks.public', [
             'driver' => 'local',
-            'root' => sys_get_temp_dir() . '/hyperverge-test',
+            'root' => sys_get_temp_dir().'/hyperverge-test',
             'visibility' => 'public',
         ]);
     }
@@ -51,6 +49,6 @@ class TestCase extends Orchestra
     protected function defineDatabaseMigrations(): void
     {
         // Load our package test migrations
-        $this->loadMigrationsFrom(__DIR__ . '/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/migrations');
     }
 }
