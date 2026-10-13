@@ -57,6 +57,9 @@ class StoreKYCImages
                     ->get($url);
 
                 if ($response->successful()) {
+                    $content = $response->body();
+                    $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->buffer($content) ?: null;
+
                     // Determine collection and filename
                     $collection = $this->getCollection($key);
                     $filename = $this->getFilename($key, $model);
@@ -64,13 +67,17 @@ class StoreKYCImages
 
                     // Add to media library
                     $media = $model
-                        ->addMediaFromString($response->body())
+                        ->addMediaFromString($content)
                         ->usingFileName($filename)
                         ->usingName($name)
                         ->withCustomProperties([
                             'kyc_image_type' => $key,
                             'original_url' => $url,
                             'downloaded_at' => now()->toIso8601String(),
+                            'transaction_id' => $transactionId,
+                            'file_size' => strlen($content),
+                            'mime_type' => $mimeType,
+                            'sha256' => hash('sha256', $content),
                         ])
                         ->toMediaCollection($collection);
 

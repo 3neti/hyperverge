@@ -202,6 +202,7 @@ class StoreKYCImagesWithValidation
                 'transaction_id' => $transactionId,
                 'file_size' => strlen($content),
                 'mime_type' => $mimeType,
+                'sha256' => hash('sha256', $content),
                 'validated' => true,
             ])
             ->toMediaCollection($collection);
